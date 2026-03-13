@@ -1,5 +1,35 @@
 # TaskSphere-Backend
 
+## Account registration API
+
+The backend exposes a registration endpoint for creating user accounts.
+
+- **Endpoint:** `POST /api/accounts/register/`
+- **Content-Type:** `application/json`
+- **Body:**
+  - `username` (string, required)
+  - `password` (string, required)
+
+Example request body:
+
+```json
+{
+  "username": "newuser",
+  "password": "StrongPass123!"
+}
+```
+
+Example success response (`201 Created`):
+
+```json
+{
+  "id": 1,
+  "username": "newuser"
+}
+```
+
+Passwords are stored securely using Django's built-in password hashing.
+
 ## Database setup
 
 This backend now supports PostgreSQL through Docker Compose for durable local development data.
