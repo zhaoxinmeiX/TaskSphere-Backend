@@ -13,6 +13,7 @@ FROM base AS deps
 # Install system dependencies required for building Python packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy and install Python dependencies
@@ -23,6 +24,11 @@ RUN pip install --upgrade pip && \
 # ── Stage 3: final image ──────────────────────────────────────────────────────
 FROM base AS final
 
+# Install runtime libraries required by PostgreSQL driver
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy installed packages from the deps stage
 COPY --from=deps /usr/local/lib/python3.13 /usr/local/lib/python3.13
 COPY --from=deps /usr/local/bin /usr/local/bin
@@ -30,11 +36,10 @@ COPY --from=deps /usr/local/bin /usr/local/bin
 # Copy project source code
 COPY . .
 
-# Set default environment variable
-ENV DJANGO_SETTINGS_MODULE=config.settings
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Set default environment variables
+ENV DJANGO_SETTINGS_MODULE=config.settings \
+    POSTGRES_HOST=db \
+    POSTGRES_PORT=5432
 
 EXPOSE 8000
 

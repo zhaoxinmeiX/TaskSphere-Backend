@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -86,11 +87,57 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
+def _sqlite_config():
+    return {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
+
+
+def _database_from_url(database_url: str):
+    parsed = urlparse(database_url)
+
+    if parsed.scheme in {'sqlite', 'sqlite3'}:
+        db_name = parsed.path.lstrip('/') or 'db.sqlite3'
+        return {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / db_name,
+        }
+
+    if parsed.scheme not in {'postgres', 'postgresql'}:
+        raise ValueError(f'Unsupported database scheme: {parsed.scheme}')
+
+    return {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': parsed.path.lstrip('/'),
+        'USER': parsed.username or '',
+        'PASSWORD': parsed.password or '',
+        'HOST': parsed.hostname or 'localhost',
+        'PORT': parsed.port or '5432',
+    }
+
+
+def _database_config():
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        return _database_from_url(database_url)
+
+    db_name = os.getenv('POSTGRES_DB')
+    if db_name:
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_name,
+            'USER': os.getenv('POSTGRES_USER', ''),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+            'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        }
+
+    return _sqlite_config()
+
+
+DATABASES = {
+    'default': _database_config(),
 }
 
 CORS_ALLOWED_ORIGINS = [
