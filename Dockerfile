@@ -30,6 +30,9 @@ COPY --from=deps /usr/local/bin /usr/local/bin
 # Copy project source code
 COPY . .
 
+# Set default environment variable
+ENV DJANGO_SETTINGS_MODULE=config.settings
+
 # Collect static files
 RUN python manage.py collectstatic --noinput
 
@@ -37,4 +40,3 @@ EXPOSE 8000
 
 # Run database migrations then start the development server
 CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
-
