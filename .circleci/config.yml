@@ -1,0 +1,56 @@
+version: 2.1
+executors:
+  python-docker:
+    docker:
+      - image: cimg/python:3.12
+
+jobs:
+  test:
+    executor: python-docker
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: Install Dependencies
+          command: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+      - save_cache:
+          paths:
+            - ~/.cache/pip
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+      - run:
+          name: Run Django Tests
+          command: python manage.py test
+  build_and_push:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - setup_remote_docker: 
+          docker_layer_caching: true 
+      - run:
+          name: Build and Push Docker Image
+          command: |
+            echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+            
+            VERSION="v0.0.${CIRCLE_BUILD_NUM}"
+            IMAGE_NAME="zhaoxinmei/circleci-tasksphere-backend"
+            
+            docker build -t $IMAGE_NAME:$VERSION -t $IMAGE_NAME:latest .
+            docker push $IMAGE_NAME:$VERSION
+            docker push $IMAGE_NAME:latest
+
+workflows:
+  version: 2
+  backend_pipeline:
+    jobs:
+      - test
+      - build_and_push:
+          requires:
+            - test 
+          filters:
+            branches:
+              only: main 
