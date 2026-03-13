@@ -20,14 +20,12 @@ services:
 
   web:
     build: .
-    container_name: django_app
+    container_name: tasksphere-backend
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     volumes:
       - .:/app
-    env_file:
-      - .env
     environment:
       POSTGRES_HOST: ${POSTGRES_HOST:-tasksphere_db}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}

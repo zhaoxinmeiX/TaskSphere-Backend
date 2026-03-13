@@ -30,6 +30,47 @@ Example success response (`201 Created`):
 
 Passwords are stored securely using Django's built-in password hashing.
 
+## Login API
+
+The backend exposes a login endpoint for user authentication.
+
+- **Endpoint:** `POST /api/accounts/login/`
+- **Content-Type:** `application/json`
+- **Body:**
+  - `username` (string, required)
+  - `password` (string, required)
+
+Example request body:
+
+```json
+{
+  "username": "testuser",
+  "password": "TestPass123!"
+}
+```
+
+Example success response (`200 OK`):
+
+```json
+{
+  "token": "b90bb8105cccdfa0cccfa8b7f2238aec282f5526",
+  "user": {
+    "id": 6,
+    "username": "testuser"
+  }
+}
+```
+
+Example error response (`400 Bad Request`):
+
+```json
+{
+  "non_field_errors": ["Invalid credentials."]
+}
+```
+
+The returned authentication token can be used for subsequent authenticated requests by including it in the `Authorization` header: `Authorization: Token b90bb8105cccdfa0cccfa8b7f2238aec282f5526`
+
 ## Database setup
 
 This backend now supports PostgreSQL through Docker Compose for durable local development data.
