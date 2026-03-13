@@ -1,25 +1,42 @@
-# Use a lightweight Python image
-FROM python:3.12-slim
+# ── Stage 1: base image ──────────────────────────────────────────────────────
+FROM python:3.13-slim AS base
 
 # Prevent Python from writing .pyc files and enable unbuffered stdout/stderr
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Set working directory
 WORKDIR /app
 
-# Copy requirements and install
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# ── Stage 2: dependencies ─────────────────────────────────────────────────────
+FROM base AS deps
 
-# Copy the rest of the Django app
+# Install system dependencies required for building Python packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# ── Stage 3: final image ──────────────────────────────────────────────────────
+FROM base AS final
+
+# Copy installed packages from the deps stage
+COPY --from=deps /usr/local/lib/python3.13 /usr/local/lib/python3.13
+COPY --from=deps /usr/local/bin /usr/local/bin
+
+# Copy project source code
 COPY . .
 
 # Set default environment variable
 ENV DJANGO_SETTINGS_MODULE=config.settings
 
-# Expose the port
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
 EXPOSE 8000
 
-# Run migrations then start Django server
+# Run database migrations then start the development server
 CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
