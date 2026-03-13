@@ -40,5 +40,5 @@ jobs:
           context: .
           push: true 
           tags: |
-            zhaoxinmei/tasksphere-backend:v${{ github.run_number }}
+            zhaoxinmei/tasksphere-backend:v0.0.${{ github.run_number }}
             zhaoxinmei/tasksphere-backend:latest
