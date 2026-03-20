@@ -31,6 +31,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = True
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = ['*']
 
@@ -87,73 +90,27 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-def _sqlite_config():
-    return {
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('PGDATABASE'),
+        'USER': os.getenv('PGUSER'),
+        'PASSWORD': os.getenv('PGPASSWORD'),
+        'HOST': os.getenv('PGHOST'),
+        'PORT': os.getenv('PGPORT', '5432'),
+    }
+}
+
+# 针对线上的 Neon 数据库，需要强制开启 SSL 才能成功连接
+if os.getenv('PGHOST') and 'neon.tech' in os.getenv('PGHOST'):
+    DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
+
+import sys
+if 'test' in sys.argv:
+    DATABASES['default'] = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-
-
-def _database_from_url(database_url: str):
-    parsed = urlparse(database_url)
-
-    if parsed.scheme in {'sqlite', 'sqlite3'}:
-        db_name = parsed.path.lstrip('/') or 'db.sqlite3'
-        return {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / db_name,
-        }
-
-    if parsed.scheme not in {'postgres', 'postgresql'}:
-        raise ValueError(f'Unsupported database scheme: {parsed.scheme}')
-
-    return {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': parsed.path.lstrip('/'),
-        'USER': parsed.username or '',
-        'PASSWORD': parsed.password or '',
-        'HOST': parsed.hostname or 'localhost',
-        'PORT': parsed.port or '5432',
-    }
-
-
-def _database_config():
-    # Vercel Neon数据库
-    database_url = os.getenv('DATABASE_URL')
-    if database_url:
-        return _database_from_url(database_url)
-    
-    # 如果没有DATABASE_URL，使用Neon环境变量
-    neon_host = os.getenv('PGHOST')
-    if neon_host and 'neon.tech' in neon_host:
-        return {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('PGDATABASE'),
-            'USER': os.getenv('PGUSER'),
-            'PASSWORD': os.getenv('PGPASSWORD'),
-            'HOST': neon_host,
-            'PORT': os.getenv('PGPORT', '5432'),
-        }
-    
-    # 其他PostgreSQL配置
-    db_name = os.getenv('POSTGRES_DB')
-    if db_name:
-        return {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db_name,
-            'USER': os.getenv('POSTGRES_USER', ''),
-            'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
-            'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-            'PORT': os.getenv('POSTGRES_PORT', '5432'),
-        }
-
-    # 最后使用SQLite（本地开发）
-    return _sqlite_config()
-
-
-DATABASES = {
-    'default': _database_config(),
-}
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
