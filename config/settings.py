@@ -90,53 +90,20 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-def _sqlite_config():
-    return {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-
-
-def _database_from_url(database_url: str):
-    parsed = urlparse(database_url)
-
-    if parsed.scheme in {'sqlite', 'sqlite3'}:
-        db_name = parsed.path.lstrip('/') or 'db.sqlite3'
-        return {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / db_name,
-        }
-
-    if parsed.scheme not in {'postgres', 'postgresql'}:
-        raise ValueError(f'Unsupported database scheme: {parsed.scheme}')
-
-    return {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': parsed.path.lstrip('/'),
-        'USER': parsed.username or '',
-        'PASSWORD': parsed.password or '',
-        'HOST': parsed.hostname or 'localhost',
-        'PORT': parsed.port or '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        }
-    }
-
-
-def _database_config():
-    # 优先读取 PROD_DATABASE_URL 来绕过 Vercel 插件可能缓存的旧 DATABASE_URL
-    database_url = os.getenv('PROD_DATABASE_URL') or os.getenv('DATABASE_URL')
-    
-    if database_url:
-        return _database_from_url(database_url)
-
-    # 最后使用SQLite（本地开发）
-    return _sqlite_config()
-
-
 DATABASES = {
-    'default': _database_config(),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('PGDATABASE'),
+        'USER': os.getenv('PGUSER'),
+        'PASSWORD': os.getenv('PGPASSWORD'),
+        'HOST': os.getenv('PGHOST'),
+        'PORT': os.getenv('PGPORT', '5432'),
+    }
 }
+
+# 针对线上的 Neon 数据库，需要强制开启 SSL 才能成功连接
+if os.getenv('PGHOST') and 'neon.tech' in os.getenv('PGHOST'):
+    DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
