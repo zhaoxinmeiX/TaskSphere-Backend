@@ -105,6 +105,13 @@ DATABASES = {
 if os.getenv('PGHOST') and 'neon.tech' in os.getenv('PGHOST'):
     DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 
+import sys
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
 ]
