@@ -117,10 +117,24 @@ def _database_from_url(database_url: str):
 
 
 def _database_config():
+    # Vercel Neon数据库
     database_url = os.getenv('DATABASE_URL')
     if database_url:
         return _database_from_url(database_url)
-
+    
+    # 如果没有DATABASE_URL，使用Neon环境变量
+    neon_host = os.getenv('PGHOST')
+    if neon_host and 'neon.tech' in neon_host:
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('PGDATABASE'),
+            'USER': os.getenv('PGUSER'),
+            'PASSWORD': os.getenv('PGPASSWORD'),
+            'HOST': neon_host,
+            'PORT': os.getenv('PGPORT', '5432'),
+        }
+    
+    # 其他PostgreSQL配置
     db_name = os.getenv('POSTGRES_DB')
     if db_name:
         return {
@@ -132,6 +146,7 @@ def _database_config():
             'PORT': os.getenv('POSTGRES_PORT', '5432'),
         }
 
+    # 最后使用SQLite（本地开发）
     return _sqlite_config()
 
 
