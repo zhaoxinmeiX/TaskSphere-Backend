@@ -31,6 +31,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'fallback-secret-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+DEBUG = True
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 ALLOWED_HOSTS = ['*']
 
@@ -114,6 +117,9 @@ def _database_from_url(database_url: str):
         'PASSWORD': parsed.password or '',
         'HOST': parsed.hostname or 'localhost',
         'PORT': parsed.port or '5432',
+        'OPTIONS': {
+            'sslmode': 'require',
+        }
     }
 
 
