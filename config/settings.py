@@ -124,11 +124,8 @@ def _database_from_url(database_url: str):
 
 
 def _database_config():
-    # Vercel Neon数据库
-    database_url = os.getenv('DATABASE_URL')
-    
-    # 强制覆盖正确的云数据库链接（解决 Vercel 环境变量可能卡在旧数据库 green-wildflower 的问题）
-    database_url = "postgresql://neondb_owner:npg_Wc6YszV7kvKh@ep-rapid-shadow-amtx5hc5-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require"
+    # 优先读取 PROD_DATABASE_URL 来绕过 Vercel 插件可能缓存的旧 DATABASE_URL
+    database_url = os.getenv('PROD_DATABASE_URL') or os.getenv('DATABASE_URL')
     
     if database_url:
         return _database_from_url(database_url)
