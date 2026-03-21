@@ -14,14 +14,6 @@ A Django REST API backend for task management with user authentication.
 
 Complete API documentation is available in [docs/API.md](docs/API.md)
 
-### Quick API Overview
-
-- **Register:** `POST /api/accounts/register/`
-- **Login:** `POST /api/accounts/login/`
-- **Logout:** `POST /api/accounts/logout/`
-- **Create Task:** `POST /api/tasks/create/`
-- **List Tasks:** `GET /api/tasks/`
-
 ### Docker Compose services
 
 - `web`: Django backend on `http://localhost:8000`
