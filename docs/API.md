@@ -114,6 +114,7 @@ Create a new task for the authenticated user.
   "id": 1,
   "title": "Complete project documentation",
   "description": "Write comprehensive documentation for the TaskSphere backend API",
+  "status": "todo",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T10:30:00Z"
 }
@@ -133,6 +134,7 @@ Get all tasks for the authenticated user.
     "id": 1,
     "title": "Complete project documentation",
     "description": "Write comprehensive documentation for the TaskSphere backend API",
+    "status": "todo",
     "created_at": "2024-01-15T10:30:00Z",
     "updated_at": "2024-01-15T10:30:00Z"
   },
@@ -140,6 +142,7 @@ Get all tasks for the authenticated user.
     "id": 2,
     "title": "Review pull requests",
     "description": "Check and approve pending pull requests",
+    "status": "in_progress",
     "created_at": "2024-01-15T09:15:00Z",
     "updated_at": "2024-01-15T09:15:00Z"
   }
@@ -149,7 +152,64 @@ Get all tasks for the authenticated user.
 **Notes:**
 - Tasks are returned in descending order of creation date (newest first)
 - Only tasks belonging to the authenticated user are returned
-- The `completed` field is available in the model but not exposed in the current API response
+- The `status` field shows the current task status
+
+### Update Task Status
+
+Update the status of a specific task.
+
+- **Endpoint:** `PATCH /api/tasks/{id}/update/`
+- **Content-Type:** `application/json`
+- **Authentication:** Required
+- **Body:**
+  - `status` (string, required) - New status value
+
+**Status Options:**
+- `"todo"` - Task is not started
+- `"in_progress"` - Task is currently being worked on
+- `"completed"` - Task is finished
+
+**Request Example:**
+```json
+{
+  "status": "in_progress"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "id": 1,
+  "title": "Complete project documentation",
+  "description": "Write comprehensive documentation for the TaskSphere backend API",
+  "status": "in_progress",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T11:15:00Z"
+}
+```
+
+**Error Responses:**
+
+**Missing Status Field (400 Bad Request):**
+```json
+{
+  "error": "Status field is required"
+}
+```
+
+**Invalid Status Value (400 Bad Request):**
+```json
+{
+  "status": ["\"invalid_status\" is not a valid choice."]
+}
+```
+
+**Not Found (404 Not Found):**
+```json
+{
+  "detail": "Not found."
+}
+```
 
 ## Error Responses
 
@@ -172,7 +232,7 @@ Most endpoints return standard HTTP status codes:
   "id": "integer (auto-generated)",
   "title": "string (max 200 characters)",
   "description": "text (optional)",
-  "completed": "boolean (default: false)",
+  "status": "string (choices: 'todo', 'in_progress', 'completed', default: 'todo')",
   "created_at": "datetime (auto-generated)",
   "updated_at": "datetime (auto-updated)",
   "user": "foreign key to User"
