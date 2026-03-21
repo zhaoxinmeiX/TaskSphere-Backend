@@ -154,25 +154,51 @@ Get all tasks for the authenticated user.
 - Only tasks belonging to the authenticated user are returned
 - The `status` field shows the current task status
 
-### Update Task Status
+### Update Task
 
-Update the status of a specific task.
+Update any field of a specific task (title, description, or status).
 
 - **Endpoint:** `PATCH /api/tasks/{id}/update/`
 - **Content-Type:** `application/json`
 - **Authentication:** Required
-- **Body:**
-  - `status` (string, required) - New status value
+- **Body:** Any combination of the following fields
+  - `title` (string, optional)
+  - `description` (string, optional)
+  - `status` (string, optional)
 
-**Status Options:**
-- `"todo"` - Task is not started
-- `"in_progress"` - Task is currently being worked on
-- `"completed"` - Task is finished
-
-**Request Example:**
+**Request Example (Update Title and Description):**
 ```json
 {
-  "status": "in_progress"
+  "title": "Updated task title",
+  "description": "Updated task description"
+}
+```
+
+**Request Example (Update Status Only):**
+```json
+{
+  "status": "completed"
+}
+```
+
+**Request Example (Update Title Only):**
+```json
+{
+  "title": "New task title"
+}
+```
+
+**Request Example (Update Description Only):**
+```json
+{
+  "description": "New task description"
+}
+```
+
+**Request Example (Clear Description):**
+```json
+{
+  "description": ""
 }
 ```
 
@@ -180,9 +206,9 @@ Update the status of a specific task.
 ```json
 {
   "id": 1,
-  "title": "Complete project documentation",
-  "description": "Write comprehensive documentation for the TaskSphere backend API",
-  "status": "in_progress",
+  "title": "Updated task title",
+  "description": "Updated task description",
+  "status": "completed",
   "created_at": "2024-01-15T10:30:00Z",
   "updated_at": "2024-01-15T11:15:00Z"
 }
@@ -190,16 +216,10 @@ Update the status of a specific task.
 
 **Error Responses:**
 
-**Missing Status Field (400 Bad Request):**
+**Invalid Field Values (400 Bad Request):**
 ```json
 {
-  "error": "Status field is required"
-}
-```
-
-**Invalid Status Value (400 Bad Request):**
-```json
-{
+  "title": ["Ensure this field has no more than 200 characters."],
   "status": ["\"invalid_status\" is not a valid choice."]
 }
 ```
@@ -210,6 +230,21 @@ Update the status of a specific task.
   "detail": "Not found."
 }
 ```
+
+**Permission Denied (403 Forbidden):**
+```json
+{
+  "detail": "You do not have permission to perform this action."
+}
+```
+
+## Status Options
+
+The status field accepts the following values:
+
+- `"todo"` - Task is not started
+- `"in_progress"` - Task is currently being worked on
+- `"completed"` - Task is finished
 
 ## Error Responses
 

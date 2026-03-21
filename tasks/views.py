@@ -42,16 +42,9 @@ class TaskUpdateView(generics.UpdateAPIView):
         serializer = self.get_serializer(task, data=request.data, partial=True)
         
         if serializer.is_valid():
-            if 'status' in request.data:
-                task.status = request.data['status']
-                task.save()
-                return Response(
-                    TaskSerializer(task).data,
-                    status=status.HTTP_200_OK
-                )
-            else:
-                return Response(
-                    {'error': 'Status field is required'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            serializer.save()
+            return Response(
+                TaskSerializer(task).data,
+                status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
