@@ -4,16 +4,35 @@ from django.contrib.auth.models import User
 from .models import Task
 
 
+class TaskModelTest(APITestCase):
+    """Test that Task model works correctly"""
+    
+    def test_task_creation(self):
+        """Test basic task creation"""
+        user = User.objects.create_user(
+            username='testuser',
+            password='testpass123'
+        )
+        task = Task.objects.create(
+            title='Test Task',
+            description='Test Description',
+            user=user
+        )
+        self.assertEqual(task.title, 'Test Task')
+        self.assertEqual(task.user, user)
+        self.assertIsNotNone(task.id)
+
+
 class TaskStatusUpdateTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='testuser',
             password='testpass123'
         )
+        # Create task without status field to test default value
         self.task = Task.objects.create(
             title='Test Task',
             description='Test Description',
-            status='todo',
             user=self.user
         )
         self.client.force_authenticate(user=self.user)

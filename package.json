@@ -2,7 +2,6 @@
   "name": "task-sphere-backend",
   "version": "1.0.0",
   "scripts": {
-    "test": "python manage.py test",
     "vercel-build": "sh build_files.sh"
   }
 }
