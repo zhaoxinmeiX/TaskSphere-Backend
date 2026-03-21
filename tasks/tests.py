@@ -81,3 +81,84 @@ class TaskAPITest(APITestCase):
         self.assertEqual(task.title, 'Updated Task Title')
         self.assertEqual(task.description, 'Updated Task Description')
         self.assertEqual(task.status, 'completed')
+    
+    def test_task_delete_endpoint(self):
+        """Test that task deletion endpoint works"""
+        # First create a task
+        from .models import Task
+        task = Task.objects.create(
+            title='Test Task to Delete',
+            description='This task will be deleted',
+            user=self.user
+        )
+        
+        # Verify task exists
+        self.assertTrue(Task.objects.filter(id=task.id).exists())
+        
+        # Delete the task
+        response = self.client.delete(f'/api/tasks/{task.id}/delete/')
+        
+        # Check response
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(response.data['message'], 'Task deleted successfully')
+        
+        # Verify task is deleted from database
+        self.assertFalse(Task.objects.filter(id=task.id).exists())
+    
+    def test_task_delete_unauthorized(self):
+        """Test that unauthorized users cannot delete tasks"""
+        # Create a task for the authenticated user
+        from .models import Task
+        task = Task.objects.create(
+            title='User Task',
+            description='This task belongs to user',
+            user=self.user
+        )
+        
+        # Create another user
+        other_user = User.objects.create_user(
+            username='otheruser',
+            password='otherpass123'
+        )
+        
+        # Authenticate as the other user
+        self.client.force_authenticate(user=other_user)
+        
+        # Try to delete the first user's task
+        response = self.client.delete(f'/api/tasks/{task.id}/delete/')
+        
+        # Should return 404 because the task doesn't exist for this user
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'Task not found or you do not have permission to delete it')
+        
+        # Verify the original task still exists
+        self.assertTrue(Task.objects.filter(id=task.id).exists())
+    
+    def test_task_delete_nonexistent(self):
+        """Test that deleting a non-existent task returns 404"""
+        response = self.client.delete('/api/tasks/999/delete/')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data['error'], 'Task not found or you do not have permission to delete it')
+    
+    def test_task_delete_unauthenticated(self):
+        """Test that unauthenticated users cannot delete tasks"""
+        # Create a task
+        from .models import Task
+        task = Task.objects.create(
+            title='Test Task',
+            description='Test Description',
+            user=self.user
+        )
+        
+        # Remove authentication
+        self.client.force_authenticate(user=None)
+        
+        # Try to delete the task
+        response = self.client.delete(f'/api/tasks/{task.id}/delete/')
+        
+        # Should return 401 for unauthenticated access
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+        # Verify the task still exists
+        self.assertTrue(Task.objects.filter(id=task.id).exists())
