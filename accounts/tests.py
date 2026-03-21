@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework.authtoken.models import Token
 
 
 User = get_user_model()
@@ -58,3 +59,35 @@ class RegisterAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('password', response.data)
+
+
+class LogoutAPITests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username='testuser', password='StrongPass123!')
+        self.token = Token.objects.create(user=self.user)
+        self.url = '/api/accounts/logout/'
+
+    def test_logout_successfully(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['message'], 'Successfully logged out.')
+        
+        # Verify token is deleted
+        with self.assertRaises(Token.DoesNotExist):
+            Token.objects.get(user=self.user)
+
+    def test_logout_without_authentication(self):
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_logout_with_invalid_token(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token invalidtoken123')
+        
+        response = self.client.post(self.url)
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
