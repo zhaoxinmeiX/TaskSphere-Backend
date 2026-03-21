@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.views import APIView
 
 from .serializers import RegisterSerializer, LoginSerializer
 
@@ -37,3 +38,20 @@ class LoginView(generics.GenericAPIView):
                 'username': user.username,
             }
         }, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        try:
+            request.user.auth_token.delete()
+            return Response(
+                {'message': 'Successfully logged out.'},
+                status=status.HTTP_200_OK
+            )
+        except Token.DoesNotExist:
+            return Response(
+                {'error': 'No valid token found.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
