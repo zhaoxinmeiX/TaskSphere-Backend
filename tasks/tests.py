@@ -49,7 +49,7 @@ class TaskAPITest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
     
     def test_task_update_endpoint(self):
-        """Test that task update endpoint works"""
+        """Test that task update endpoint works for title, description, and status"""
         # First create a task
         from .models import Task
         task = Task.objects.create(
@@ -58,10 +58,26 @@ class TaskAPITest(APITestCase):
             user=self.user
         )
         
-        # Test updating the task
+        # Test updating title and description
+        data = {
+            'title': 'Updated Task Title',
+            'description': 'Updated Task Description'
+        }
+        response = self.client.patch(f'/api/tasks/{task.id}/update/', data)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['title'], 'Updated Task Title')
+        self.assertEqual(response.data['description'], 'Updated Task Description')
+        
+        # Test updating status
         data = {'status': 'completed'}
         response = self.client.patch(f'/api/tasks/{task.id}/update/', data)
         
-        # Check if endpoint exists and responds
-        # We don't assert specific status codes since the field might not exist in CI
-        self.assertIn(response.status_code, [200, 400, 404])
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['status'], 'completed')
+        
+        # Verify database was updated
+        task.refresh_from_db()
+        self.assertEqual(task.title, 'Updated Task Title')
+        self.assertEqual(task.description, 'Updated Task Description')
+        self.assertEqual(task.status, 'completed')
