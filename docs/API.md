@@ -238,6 +238,49 @@ Update any field of a specific task (title, description, or status).
 }
 ```
 
+### Delete Task
+
+Delete a specific task permanently from the database.
+
+- **Endpoint:** `DELETE /api/tasks/{id}/delete/`
+- **Authentication:** Required
+- **URL Parameters:**
+  - `id` (integer, required) - The ID of the task to delete
+
+**Request Example:**
+```bash
+DELETE /api/tasks/1/delete/
+Authorization: Token your-auth-token-here
+```
+
+**Success Response (204 No Content):**
+```json
+{
+  "message": "Task deleted successfully"
+}
+```
+
+**Error Responses:**
+
+**Not Found (404 Not Found):**
+```json
+{
+  "error": "Task not found or you do not have permission to delete it"
+}
+```
+
+**Unauthorized (401 Unauthorized):**
+```json
+{
+  "detail": "Authentication credentials were not provided."
+}
+```
+
+**Notes:**
+- The task is permanently deleted from the database
+- Only the task owner can delete their own tasks
+- Returns 204 No Content on successful deletion
+
 ## Status Options
 
 The status field accepts the following values:
