@@ -19,3 +19,11 @@ class TaskCreateView(generics.CreateAPIView):
             TaskSerializer(task).data,
             status=status.HTTP_201_CREATED
         )
+
+
+class TaskListView(generics.ListAPIView):
+    serializer_class = TaskSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Task.objects.filter(user=self.request.user)
