@@ -112,10 +112,7 @@ if 'test' in sys.argv:
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
-    'http://localhost:5173',
-]
+CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
