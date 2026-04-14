@@ -49,3 +49,35 @@ jobs:
           tags: |
             zhaoxinmei/tasksphere-backend:v0.0.${{ github.run_number }}
             zhaoxinmei/tasksphere-backend:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Start SSH agent and add key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Add EC2 host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy on EC2
+        run: |
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << "EOF"
+            set -e
+            cd /home/ubuntu/
+            sudo rm -r TaskSphere-Backend
+            git clone https://github.com/zhaoxinmeiX/TaskSphere-Backend.git
+            cd TaskSphere-Backend
+            cp /home/ubuntu/soft806.env /home/ubuntu/TaskSphere-Backend/.env
+            sudo docker build -t django_app:latest .
+            sudo docker rm -f django_app || true
+            sudo docker run -d                   --name django_app                   --network app_net                   -p 8000:8000                   django_app:latest
+            sudo docker exec django_app python manage.py migrate
+          EOF
