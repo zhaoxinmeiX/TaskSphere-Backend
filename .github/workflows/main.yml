@@ -71,13 +71,26 @@ jobs:
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << "EOF"
             set -e
-            cd /home/ubuntu/
-            sudo rm -rf TaskSphere-Backend
-            git clone https://github.com/zhaoxinmeiX/TaskSphere-Backend.git
-            cd TaskSphere-Backend
-            cp /home/ubuntu/soft806.env /home/ubuntu/TaskSphere-Backend/.env
+            cd /home/ubuntu/TaskSphere-Backend
+            
+            # 1. 重新构建镜像
             sudo docker build -t django_app:latest .
+            
+            # 2. 停止并移除旧容器
             sudo docker rm -f django_app || true
-            sudo docker run -d                   --name django_app                   --network app_net                   -p 8000:8000                   django_app:latest
+            
+            # 3. 启动新容器
+            # 我们通过 --env-file 指向宿主机上的软链接或实际文件
+            sudo docker run -d \
+              --name django_app \
+              --network app_net \
+              --env-file /home/ubuntu/soft806.env \
+              -p 8000:8000 \
+              django_app:latest
+            
+            # 4. 稍微等一下数据库响应
+            sleep 5
+            
+            # 5. 执行迁移
             sudo docker exec django_app python manage.py migrate
           EOF
